@@ -1,37 +1,3 @@
-library(shiny)
-library(shinyFeedback)
-library(glue)
-library(tidyverse)
-library(markdown)
-library(phacking)
-
-# ------------------------------------------------------------------------------
-# helper functions for formatting
-# ------------------------------------------------------------------------------
-
-.str <- function(s) {
-  paste(strwrap(glue(s, .envir = parent.frame())), collapse = " ")
-}
-
-ci_text <- function(estimate, ci_lower, ci_upper, sig = 2) {
-  .str("{signif(estimate, sig)} (95% CI [{signif(ci_lower, sig)},
-        {signif(ci_upper, sig)}])")
-}
-estimate_text <- function(model_label, model_result, sig = 2) {
-  if (is.null(model_result)) ci <- ""
-  else ci <- ci_text(model_result$estimate, model_result$ci_lower,
-                     model_result$ci_upper, sig = sig)
-  p(strong(glue("{str_to_sentence(model_label)} estimate:")), br(), ci)
-}
-
-danger <- function(inputId, show, text) {
-  feedbackDanger(inputId, show, text, color = "#e74c3c", icon = NULL)
-}
-
-warn <- function(inputId, show, text) {
-  feedbackWarning(inputId, show, text, color = "#f39c12", icon = NULL)
-}
-
 shinyServer(function(input, output) {
   
   # ----------------------------------------------------------------------------
@@ -225,27 +191,26 @@ shinyServer(function(input, output) {
     cm <- corrected_model()
     cm$values$tcrit <- qnorm(0.975)
     rtma_qqplot(cm) +
-      theme_classic(base_family = "Lato") +
       theme(legend.position = "top",
             legend.title = element_blank())
   }
   
-  fp_res <- 300
-  fp_width <- 1200
-  fp_height <- 1100
+  qq_res <- 300
+  qq_width <- 1200
+  qq_height <- 1100
   
   output$qqplot <- renderPlot({
     req(corrected_model())
     plot_qqplot()
-  }, res = fp_res, height = fp_height, width = fp_width)
+  }, res = qq_res, height = qq_height, width = qq_width)
   
   output$download_qqplot <- downloadHandler(
     filename = function() {
       paste0(tools::file_path_sans_ext(input$meta_file$name), "_qqplot", ".png")
     },
     content = function(file) {
-      ggsave(file, plot = plot_qqplot(), device = "png", dpi = fp_res,
-             height = fp_height, width = fp_width, units = "px")
+      ggsave(file, plot = plot_qqplot(), device = "png", dpi = qq_res,
+             height = qq_height, width = qq_width, units = "px")
     }
   )
   
@@ -259,26 +224,25 @@ shinyServer(function(input, output) {
   # ----------------------------------------------------------------------------
   
   plot_zdensity <- function() {
-    z_density(y_vals(), v_vals(), crit_color = "#dc322f") +
-      theme_classic(base_family = "Lato")
+    z_density(y_vals(), v_vals(), crit_color = "#dc322f")
   }
   
-  fp_res <- 300
-  fp_width <- 1200
-  fp_height <- 800
+  zd_res <- 300
+  zd_width <- 1200
+  zd_height <- 800
   
   output$zdensity <- renderPlot({
     req(corrected_model())
     plot_zdensity()
-  }, res = fp_res, height = fp_height, width = fp_width)
+  }, res = zd_res, height = zd_height, width = zd_width)
   
   output$download_zdensity <- downloadHandler(
     filename = function() {
       paste0(tools::file_path_sans_ext(input$meta_file$name), "_zdensity", ".png")
     },
     content = function(file) {
-      ggsave(file, plot = plot_zdensity(), device = "png", dpi = fp_res,
-             height = fp_height, width = fp_width, units = "px")
+      ggsave(file, plot = plot_zdensity(), device = "png", dpi = zd_res,
+             height = zd_height, width = zd_width, units = "px")
     }
   )
   

@@ -1,38 +1,3 @@
-library(shiny)
-library(shinyFeedback)
-library(glue)
-library(tidyverse)
-library(markdown)
-library(PublicationBias)
-
-# ------------------------------------------------------------------------------
-# helper functions for formatting
-# ------------------------------------------------------------------------------
-
-.str <- function(s) {
-  paste(strwrap(glue(s, .envir = parent.frame())), collapse = " ")
-}
-
-ci_text <- function(estimate, ci_lower, ci_upper, sig = 2) {
-  .str("{signif(estimate, sig)} (95% CI [{signif(ci_lower, sig)},
-        {signif(ci_upper, sig)}])")
-}
-estimate_text <- function(model_label, model_result, sig = 2) {
-  if (is.null(model_result)) ci <- ""
-  else ci <- ci_text(model_result$estimate, model_result$ci_lower,
-                     model_result$ci_upper, sig = sig)
-  p(strong(glue("{str_to_sentence(model_label)} estimate:")), br(), ci)
-}
-sval_print <- function(sval) if (is.numeric(sval)) signif(sval, 2) else sval
-
-danger <- function(inputId, show, text) {
-  feedbackDanger(inputId, show, text, color = "#e74c3c", icon = NULL)
-}
-
-warn <- function(inputId, show, text) {
-  feedbackWarning(inputId, show, text, color = "#f39c12", icon = NULL)
-}
-
 shinyServer(function(input, output) {
   
   # ----------------------------------------------------------------------------
@@ -351,7 +316,6 @@ shinyServer(function(input, output) {
                         favor_positive = positive(),
                         est_all = uncorrected_model()$estimate,
                         est_worst = worst_model()$estimate) +
-      theme_classic(base_family = "Lato") +
       theme(legend.position = "top",
             legend.title = element_blank())
   }

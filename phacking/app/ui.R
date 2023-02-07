@@ -1,22 +1,9 @@
-library(shiny)
-library(shinythemes)
-library(shinyFeedback)
-library(shinycssloaders)
-library(shinyBS)
-library(rclipboard)
-library(glue)
-options(spinner.color = "#3498db")
-options(spinner.type = 1)
-
-tooltips <- yaml::read_yaml("docs/tooltips.yaml")
-tooltip <- function(tt) bsTooltip(tt, tooltips[[tt]]$text, placement = "top")
-
 fluidPage(
   useShinyFeedback(),
   rclipboardSetup(),
   
-  theme = shinytheme("flatly"),
-  includeCSS("www/styles.css"),
+  theme = shinytheme(shiny_theme),
+  includeCSS("../../styles.css"),
   tags$head(tags$base(target = "_blank")),
   
   title = "p-hacking",
