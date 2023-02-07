@@ -1,0 +1,7 @@
+This app fits right-truncated meta-analysis (RTMA), a bias correction for the joint effects of _p_-hacking (i.e., manipulation of results within studies to obtain significant, positive estimates) and traditional publication bias (i.e., the selective publication of studies with significant, positive results) in meta-analyses.
+
+Please use the following citation:
+
+[Mathur MB (2022). Sensitivity analysis for _p_-hacking in meta-analyses. Under review.](https://doi.org/10.31219/osf.io/ezjsx)
+
+Unlike publication bias alone, _p_-hacking that favors significant, positive results (termed "affirmative") can distort the distribution of affirmative results. To bias-correct results from affirmative studies would require strong assumptions on the exact nature of _p_-hacking. In contrast, joint _p_-hacking and publication bias do not distort the distribution of published nonaffirmative results when there is stringent _p_-hacking (e.g., investigators who hack always eventually obtain an affirmative result) or when there is stringent publication bias (e.g., nonaffirmative results from hacked studies are never published). This means that any published nonaffirmative results are from unhacked studies. Under these assumptions, RTMA involves analyzing only the published nonaffirmative results to essentially impute the full underlying distribution of all results prior to selection due to _p_-hacking and/or publication bias. This app also produces diagnostic plots described in Mathur (2022).

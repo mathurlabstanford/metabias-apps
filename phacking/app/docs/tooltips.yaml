@@ -1,0 +1,8 @@
+y_cols:
+  text: Choose the variable representing studies&#39; point estimates
+  
+v_cols:
+  text: Choose the variable representing studies&#39; variances (squared standard errors)
+
+directions:
+  text: Whether phacking and publication bias are thought to favor positive-signed, significant estimates or negative-signed, significant estimates

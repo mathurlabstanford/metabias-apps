@@ -1,0 +1,20 @@
+y_cols:
+  text: Choose the variable representing studies&#39; point estimates
+  
+v_cols:
+  text: Choose the variable representing studies&#39; variables (squared standard errors)
+
+directions:
+  text: Whether publication bias is thought to favor positive-signed, significant estimates or negative-signed, significant estimates
+
+model_type:
+  text: Whether to fit a fixed-effects meta-analysis or a robust random-effects meta-analysis
+
+cluster_cols:
+  text: If point estimates are independent, choose [none]. If instead point estimates are clustered (e.g., within papers), choose the variable representing clusters of point estimates (e.g., the ID of the paper).
+
+eta_slider:
+  text: The number of times more likely an affirmative study is to be published than a nonaffirmative study. If the direction is set to favoring positive results, affirmative studies are those with positive-signed, significant estimates. If the direction is set to favoring negative results, affirmative studies are those with negative-signed, significant estimates.   
+
+q_slider:
+  text: The attenuated value to which to shift the pooled point estimate or its confidence interval. Should be specified on the same scale as the point estimates (e.g., if the point estimates are on the log-risk ratio scale, then q should be as well).

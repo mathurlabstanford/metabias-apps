@@ -1,0 +1,81 @@
+img {
+  width: 100%;
+  height: auto;
+}
+
+.bs-callout {
+  padding: 6px 8px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  border: 1px solid #dee2e6;
+  border-left-width: 0.4rem;
+  border-radius: 0.25rem;
+}
+
+.bs-callout h4 {
+  margin-top: 0rem;
+}
+
+.bs-callout-info {
+  border-left-color: #18bc9c;
+}
+
+.bs-callout-input {
+  border-left-color: #2c3e50;
+  background: #ecf0f1;
+  min-height: 110px;
+}
+
+.bs-callout-input p {
+  font-size: 90%;
+}
+
+.bs-callout-input .form-group {
+  margin-bottom: 0px;
+}
+
+.bs-callout-output {
+  border-left-color: #3498db;
+}
+
+.docs p {
+  margin-bottom: .5rem;
+  font-size: 90%;
+}
+
+/*
+h2 {
+  margin-top: .5rem;
+  font-size: 2rem;
+}
+*/
+
+.shiny-file-input-progress {
+  display: none
+}
+
+.shiny-output-error {
+  color: var(--gray);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.selectize-control {
+  margin-bottom: 0px;
+}
+
+.shiny-input-container:not(.shiny-input-container-inline) {
+  width: 100%;
+}
+
+#error, #error-label {
+  display: none;
+}
+
+#error-text p {
+  margin-bottom: 0px;
+}
+
+.tooltip-inner {
+  max-width: 1000px
+}

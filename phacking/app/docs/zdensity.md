@@ -1,0 +1,3 @@
+#### Z-score density plot
+
+As another diagnostic plot, we can examine the z-scores of all published point estimates. When _p_-hacking favors affirmative estimates over nonaffirmative estimates, as our methods and others assume, z-scores may disproportionately concentrate just above the critical value (e.g., 1.96). Importantly, the presence of _p_-hacking does not *guarantee* a concentration of z-scores just above the critical value, so it is prudent to proceed with the fitting RTMA even if no such concentration is apparent. In contrast, if z-scores also concentrate just *below* the critical value, or if they also concentrate below the sign-reversed critical value (e.g., –1.96), this could indicate forms of _p_-hacking that violate the assumptions of RTMA.
