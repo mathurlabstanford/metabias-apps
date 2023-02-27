@@ -42,9 +42,18 @@ estimate_text <- function(model_label, model_result, sig = 2) {
 sval_print <- function(sval) if (is.numeric(sval)) signif(sval, 2) else sval
 
 danger <- function(inputId, show, text) {
-  feedbackDanger(inputId, show, text, color = "#e74c3c", icon = NULL)
+  feedbackDanger(inputId, show, paste(icon("circle-exclamation"), text),
+                 #icon = paste(icon("circle-info"), text),
+                 color = "#e74c3c", icon = NULL)
 }
 
 warn <- function(inputId, show, text) {
-  feedbackWarning(inputId, show, text, color = "#f39c12", icon = NULL)
+  feedbackWarning(inputId, show, paste(icon("triangle-exclamation"), text),
+                  #icon = paste(icon("circle-info"), text),
+                  icon = NULL,
+                  color = "#f39c12")
+}
+
+info <- function(inputId, show, text) {
+  feedback(inputId, show, paste(icon("circle-info"), text), color = "#3b9cba")
 }

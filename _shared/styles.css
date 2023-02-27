@@ -68,14 +68,20 @@ h2 {
   width: 100%;
 }
 
-#error, #error-label {
+#error, #error-label, #default, #default-label {
   display: none;
 }
 
-#error-text p {
+#error-text p, #default-text p {
   margin-bottom: 0px;
 }
 
 .tooltip-inner {
   max-width: 1000px
+}
+
+.form-control, .btn-file {
+  padding: 0px 15px;
+  display: inherit;
+  height: 34px;
 }
