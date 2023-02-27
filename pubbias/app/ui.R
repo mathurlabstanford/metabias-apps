@@ -3,7 +3,7 @@ fluidPage(
   rclipboardSetup(),
   
   theme = shinytheme(shiny_theme),
-  includeCSS("../../styles.css"),
+  includeCSS("www/_shared/styles.css"),
   tags$head(tags$base(target = "_blank")),
   
   title = "Publication bias",

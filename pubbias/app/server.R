@@ -25,16 +25,21 @@ shinyServer(function(input, output) {
   output$model_type <- renderUI({
     req(input$meta_data, input$y_col, input$v_col, input$direction)
     selectInput("model_type", "Model type",
-                choices = c("fixed-effects" = "fixed",
-                            "robust random-effects" = "robust"))
+                choices = c("robust random-effects" = "robust",
+                            "fixed-effects" = "fixed"))
+    # selectInput("model_type", "Model type",
+    #             choices = c("fixed-effects" = "fixed",
+    #                         "robust random-effects" = "robust"))
   })
   
   output$cluster_cols <- renderUI({
     req(input$meta_data, input$y_col, input$v_col, input$direction,
         input$model_type)
     if (input$model_type == "robust") {
+      # selectInput("cluster_col", "Column of cluster labels",
+      #             choices = c("", "[none]", names(meta_data_raw())))
       selectInput("cluster_col", "Column of cluster labels",
-                  choices = c("", "[none]", names(meta_data_raw())))
+                  choices = c("[none]", names(meta_data_raw())))
     }
   })
   
@@ -75,7 +80,8 @@ shinyServer(function(input, output) {
     cc <- input$cluster_col
     cluster_none <- !is.null(cc) && str_detect(cc, "none")
     fixed <- str_detect(input$model_type, "fixed")
-    if (!fixed && (is.null(cc) || cc == "")) return(FALSE) # for robust model, wait for cluster selection
+    if (!fixed && is.null(cc)) return(FALSE) # for robust model, wait for cluster selection
+    # if (!fixed && (is.null(cc) || cc == "")) return(FALSE) # for robust model, wait for cluster selection
     if (fixed || cluster_none) 1:nrow(meta_data()) else meta_data()[[cc]]
   })
   
