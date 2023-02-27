@@ -3,7 +3,7 @@ fluidPage(
   rclipboardSetup(),
   
   theme = shinytheme(shiny_theme),
-  includeCSS("../../styles.css"),
+  includeCSS("www/_shared/styles.css"),
   tags$head(tags$base(target = "_blank")),
   
   title = "p-hacking",
@@ -30,7 +30,8 @@ fluidPage(
         column(width = 2, uiOutput("v_cols")), tooltip("v_cols"),
         column(width = 2, uiOutput("directions")), tooltip("directions"),
       ),
-      fluidRow(column(width = 8, offset = 2, textInput("error", "")))
+      fluidRow(column(width = 3, textInput("default", "")),
+               column(width = 7, textInput("error", "")))
   ),
   
   fluidRow(

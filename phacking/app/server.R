@@ -4,38 +4,52 @@ shinyServer(function(input, output) {
   # overall input elements
   # ----------------------------------------------------------------------------
   
+  y_col <- reactive({
+    if (is.null(input$y_col)) "yi" else input$y_col
+  })
+  
   output$y_cols <- renderUI({
     req(meta_data_raw())
-    selectInput("y_col", "Column of point estimates",
+    selectInput("y_col", "Column of point estimates", selected = y_col(),
                 choices = c("Select a column" = "", names(meta_data_raw())))
+  }) |> bindCache(meta_data_raw(), y_col())
+  
+  v_col <- reactive({
+    if (is.null(input$v_col)) "vi" else input$v_col
   })
   
   output$v_cols <- renderUI({
     req(meta_data_raw())
-    selectInput("v_col", "Column of estimated variances",
+    selectInput("v_col", "Column of estimated variances", selected = v_col(),
                 choices = c("Select a column" = "", names(meta_data_raw())))
-  })
+  }) |> bindCache(meta_data_raw())
   
   output$directions <- renderUI({
     req(meta_data_raw())
     selectInput("direction", "Direction",
                 choices = c("favor positive", "favor negative"))
-  })
+  }) |> bindCache(meta_data_raw())
   
   # ----------------------------------------------------------------------------
   # reactive values based on overall inputs
   # ----------------------------------------------------------------------------
   
   meta_data_raw <- reactive({
-    req(input$meta_file)
-    read_csv(input$meta_file$datapath, show_col_types = FALSE)
-  })
+    # info("default", is.null(input$meta_file),
+    #      "Showing results for an example dataset.")
+    # if (is.null(input$meta_file)) {
+    #   read_csv(example_file, show_col_types = FALSE)
+    # } else {
+      read_csv(input$meta_file$datapath, show_col_types = FALSE)
+    # }
+  }) |> bindCache(input$meta_file)
   
   meta_data <- reactive({
-    req(meta_data_raw(), input$y_col, input$v_col)
+    req(meta_data_raw(), y_col(), v_col())
+    if (!all(c(y_col(), v_col()) %in% colnames(meta_data_raw()))) return(NULL)
     meta_data_raw() |>
-      filter(!is.na(.data[[input$y_col]]), !is.na(.data[[input$v_col]]))
-  })
+      filter(!is.na(.data[[y_col()]]), !is.na(.data[[v_col()]]))
+  }) |> bindCache(meta_data_raw(), y_col(), v_col())
   
   positive <- reactive({
     req(input$direction)
@@ -43,13 +57,13 @@ shinyServer(function(input, output) {
   })
   
   y_vals <- reactive({
-    req(meta_data(), input$y_col)
-    meta_data()[[input$y_col]]
+    req(meta_data(), y_col())
+    meta_data()[[y_col()]]
   })
   
   v_vals <- reactive({
-    req(meta_data(), input$v_col)
-    meta_data()[[input$v_col]]
+    req(meta_data(), v_col())
+    meta_data()[[v_col()]]
   })
   
   # ----------------------------------------------------------------------------
@@ -57,18 +71,18 @@ shinyServer(function(input, output) {
   # ----------------------------------------------------------------------------
   
   valid_y <- reactive({
-    req(y_vals())
+    req(y_col()) # req(y_vals())
     y_valid <- is.numeric(y_vals())
     danger("y_col", !y_valid, "values must be numeric")
     req(y_valid)
-  })
+  }) #|> bindCache(y_col())
   
   valid_v <- reactive({
-    req(v_vals())
+    req(v_col()) #, v_vals()) TODO
     v_valid <- is.numeric(v_vals()) & all(v_vals() > 0)
     danger("v_col", !v_valid, "values must be numeric & positive")
     req(v_valid)
-  })
+  }) #|> bindCache(v_col())
   
   valid_affirm <- reactive({
     req(y_vals(), v_vals(), input$direction)
@@ -86,7 +100,7 @@ shinyServer(function(input, output) {
                   and direction.")
     danger("error", no_either, error)
     req(!no_either)
-  })
+  }) #|> bindCache(y_col(), v_col(), input$direction)
   
   # ----------------------------------------------------------------------------
   # phacking_meta
@@ -94,7 +108,7 @@ shinyServer(function(input, output) {
   
   uncorrected_model <- reactive({
     req(valid_y(), valid_v(), valid_affirm())
-    robu_formula <- as.formula(glue("{input$y_col} ~ 1"))
+    robu_formula <- as.formula(glue("{y_col()} ~ 1"))
     meta_model <- robumeta::robu(robu_formula,
                                  studynum = 1:nrow(meta_data()),
                                  data = meta_data(),
@@ -107,7 +121,9 @@ shinyServer(function(input, output) {
     warn("error", opposite_dir,
          "Warning: favored direction is opposite of the pooled estimate.")
     meta_result
-  })
+  }) |>
+    bindCache(meta_data(), y_col(), v_col(), input$direction,
+              valid_y(), valid_v(), valid_affirm())
 
   output$uncorrected <- renderUI({
     req(uncorrected_model())
@@ -116,15 +132,18 @@ shinyServer(function(input, output) {
   
   worst_model <- reactive({
     req(valid_y(), valid_v(), valid_affirm(), corrected_model())
-    robu_formula <- as.formula(glue("{input$y_col} ~ 1"))
+    robu_formula <- as.formula(glue("{y_col()} ~ 1"))
     dnaff <- corrected_model()$data |> filter(!affirm)
     worst_model <- robumeta::robu(robu_formula,
                                   studynum = 1:nrow(dnaff),
                                   data = dnaff,
-                                  var.eff.size = dnaff[[input$v_col]],
+                                  # data in corrected model always has vi column
+                                  var.eff.size = dnaff[["vi"]],
                                   small = TRUE)
     metabias::robu_ci(worst_model)
-  })
+  }) |>
+    bindCache(corrected_model())
+    # bindCache(meta_data(), y_col(), v_col(), input$direction)
   
   output$worst <- renderUI({
     req(worst_model())
@@ -132,14 +151,16 @@ shinyServer(function(input, output) {
   })
   
   corrected_model <- reactive({
-    req(valid_y(), valid_v(), valid_affirm())
-    meta <- phacking_meta(yi = meta_data()[[input$y_col]],
-                          vi = meta_data()[[input$v_col]],
+    req(input$direction, valid_y(), valid_v(), valid_affirm())
+    meta <- phacking_meta(yi = meta_data()[[y_col()]],
+                          vi = meta_data()[[v_col()]],
                           favor_positive = positive(),
                           parallelize = FALSE)
     meta$stats <- meta$stats |> rename(estimate = mode)
     meta
-  })
+  }) |>
+    bindCache(meta_data(), y_col(), v_col(), input$direction,
+              valid_y(), valid_v(), valid_affirm())
   
   mu <- reactive({
     corrected_model()$stats |> filter(param == "mu")
@@ -202,7 +223,8 @@ shinyServer(function(input, output) {
   output$qqplot <- renderPlot({
     req(corrected_model())
     plot_qqplot()
-  }, res = qq_res, height = qq_height, width = qq_width)
+  }, res = qq_res, height = qq_height, width = qq_width) |>
+    bindCache(corrected_model(), sizePolicy = \(w, h) c(qq_width, qq_height))
   
   output$download_qqplot <- downloadHandler(
     filename = function() {
@@ -234,7 +256,8 @@ shinyServer(function(input, output) {
   output$zdensity <- renderPlot({
     req(corrected_model())
     plot_zdensity()
-  }, res = zd_res, height = zd_height, width = zd_width)
+  }, res = zd_res, height = zd_height, width = zd_width) |>
+    bindCache(corrected_model(), sizePolicy = \(w, h) c(zd_width, zd_height))
   
   output$download_zdensity <- downloadHandler(
     filename = function() {
