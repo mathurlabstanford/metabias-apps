@@ -13,9 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    defaults:
-      run:
-        working-directory: ${{ inputs.app-name }}
     steps:
       - uses: actions/checkout@v3
 
@@ -26,6 +23,8 @@ jobs:
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-renv@v2
+        with:
+          working-directory: ${{ inputs.app-name }}
 
       - name: Install rsconnect
         run: install.packages("rsconnect")
@@ -36,6 +35,7 @@ jobs:
           APPNAME: ${{ inputs.app-name }}
           ACCOUNT: ${{ inputs.account-name }}
           SERVER: shinyapps.io
+        working-directory: ${{ inputs.app-name }}/app
         run: |
           rsconnect::setAccountInfo("${{ secrets.RSCONNECT_USER }}", "${{ secrets.RSCONNECT_TOKEN }}", "${{ secrets.RSCONNECT_SECRET }}")
           rsconnect::deployApp(appName = "${{ env.APPNAME }}", account = "${{ env.ACCOUNT }}", server = "${{ env.SERVER }}")
