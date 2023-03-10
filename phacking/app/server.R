@@ -22,13 +22,13 @@ shinyServer(function(input, output) {
     req(meta_data_raw())
     selectInput("v_col", "Column of estimated variances", selected = v_col(),
                 choices = c("Select a column" = "", names(meta_data_raw())))
-  }) |> bindCache(meta_data_raw())
+  }) |> bindCache(meta_data_raw(), v_col())
   
   output$directions <- renderUI({
     req(meta_data_raw())
     selectInput("direction", "Direction",
                 choices = c("favor positive", "favor negative"))
-  }) |> bindCache(meta_data_raw())
+  }) #|> bindCache(meta_data_raw())
   
   # ----------------------------------------------------------------------------
   # reactive values based on overall inputs
@@ -131,7 +131,7 @@ shinyServer(function(input, output) {
                                  small = TRUE)
     metabias::robu_ci(meta_model)
   }) |>
-    bindCache(meta_data(), y_col(), v_col(), input$direction,
+    bindCache(meta_data(), y_col(), v_col(), #input$direction,
               valid_y(), valid_v(), valid_affirm())
 
   output$uncorrected <- renderUI({
