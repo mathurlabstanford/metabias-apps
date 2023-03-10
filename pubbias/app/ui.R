@@ -1,4 +1,5 @@
 fluidPage(
+  useShinyjs(),
   useShinyFeedback(),
   rclipboardSetup(),
   

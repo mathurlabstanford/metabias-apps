@@ -12,7 +12,7 @@ shinyServer(function(input, output) {
     req(meta_data_raw())
     selectInput("y_col", "Column of point estimates", selected = y_col(),
                 choices = c("Select a column" = "", names(meta_data_raw())))
-  })
+  }) |> bindCache(meta_data_raw(), y_col())
   
   v_col <- reactive({
     if (is.null(input$v_col)) "vi" else input$v_col
@@ -22,7 +22,7 @@ shinyServer(function(input, output) {
     req(meta_data_raw())
     selectInput("v_col", "Column of estimated variances", selected = v_col(),
                 choices = c("Select a column" = "", names(meta_data_raw())))
-  })
+  }) |> bindCache(meta_data_raw(), v_col())
   
   output$directions <- renderUI({
     req(meta_data_raw())
@@ -43,12 +43,12 @@ shinyServer(function(input, output) {
       selectInput("cluster_col", "Column of cluster labels",
                   choices = c("[none]", names(meta_data_raw())))
     }
-  })
+  }) |> bindCache(meta_data_raw(), input$model_type)
   
   # ----------------------------------------------------------------------------
   # reactive values based on overall inputs
   # ----------------------------------------------------------------------------
-
+  
   # filename of data csv
   input_file <- reactiveVal()
   
@@ -65,16 +65,15 @@ shinyServer(function(input, output) {
   
   meta_data_raw <- reactive({
     req(input_file())
-    message(input_file())
     read_csv(input_file(), show_col_types = FALSE)
   })
-    
+  
   meta_data <- reactive({
-    req(meta_data_raw(), input$y_col, input$v_col)
+    req(meta_data_raw(), y_col(), v_col())
     if (!all(c(y_col(), v_col()) %in% colnames(meta_data_raw()))) return(NULL)
     meta_data_raw() |>
-      filter(!is.na(.data[[input$y_col]]), !is.na(.data[[input$v_col]]))
-  })
+      filter(!is.na(.data[[y_col()]]), !is.na(.data[[v_col()]]))
+  }) |> bindCache(meta_data_raw(), y_col(), v_col())
   
   positive <- reactive({
     req(input$direction)
@@ -84,20 +83,19 @@ shinyServer(function(input, output) {
   cluster_col <- reactive({
     req(input$model_type)
     cc <- input$cluster_col
-    cluster_none <- !is.null(cc) && str_detect(cc, "none")
+    cluster_none <- is.null(cc) || str_detect(cc, "none")
     fixed <- str_detect(input$model_type, "fixed")
-    if (!fixed && is.null(cc)) return(FALSE)
     if (fixed || cluster_none) 1:nrow(meta_data()) else meta_data()[[cc]]
   })
   
   y_vals <- reactive({
     req(meta_data(), y_col())
-    meta_data()[[input$y_col]]
+    meta_data()[[y_col()]]
   })
   
   v_vals <- reactive({
     req(meta_data(), v_col())
-    meta_data()[[input$v_col]]
+    meta_data()[[v_col()]]
   })
   
   # ----------------------------------------------------------------------------
@@ -159,7 +157,7 @@ shinyServer(function(input, output) {
                           ci_lower = meta_model$ci.lb,
                           ci_upper = meta_model$ci.ub)
     } else if (input$model_type == "robust") {
-      robu_formula <- as.formula(glue("{input$y_col} ~ 1"))
+      robu_formula <- as.formula(glue("{y_col()} ~ 1"))
       meta_model <- robumeta::robu(robu_formula,
                                    studynum = cluster_col(),
                                    data = meta_data(),
@@ -168,24 +166,31 @@ shinyServer(function(input, output) {
       meta_result <- metabias::robu_ci(meta_model)
     }
     meta_result
-  })
+  }) |>
+    bindCache(meta_data(), y_col(), v_col(), #input$direction,
+              valid_y(), valid_v(), valid_affirm())
   
   meta_model <- reactive({
     req(input$eta, valid_y(), valid_v(), valid_affirm(),
         input$model_type, cluster_col())
-    pubbias_meta(yi = meta_data()[[input$y_col]],
-                 vi = meta_data()[[input$v_col]],
-                 selection_ratio = input$eta,
-                 cluster = cluster_col(),
-                 model_type = input$model_type,
-                 favor_positive = positive(),
-                 return_worst_meta = TRUE)
-  })
+    # disable(selector = ".bs-callout-input")
+    meta <- pubbias_meta(yi = meta_data()[[y_col()]],
+                         vi = meta_data()[[v_col()]],
+                         selection_ratio = input$eta,
+                         cluster = cluster_col(),
+                         model_type = input$model_type,
+                         favor_positive = positive(),
+                         return_worst_meta = TRUE)
+    # enable(selector = ".bs-callout-input")
+    meta
+  }) |>
+    bindCache(meta_data(), y_col(), v_col(), positive(), input$model_type,
+              cluster_col(), input$eta, valid_y(), valid_v(), valid_affirm())
   
   corrected_model <- reactive({
     meta_model()$stats |> filter(model == "pubbias")
   })
-
+  
   worst_model <- reactive({
     meta_model()$stats |> filter(model == "worst_case")
   })
@@ -245,13 +250,15 @@ shinyServer(function(input, output) {
   sval_model <- reactive({
     req(input$q, valid_y(), valid_v(), valid_affirm(),
         input$model_type, cluster_col())
-    pubbias_svalue(yi = meta_data()[[input$y_col]],
-                   vi = meta_data()[[input$v_col]],
+    pubbias_svalue(yi = meta_data()[[y_col()]],
+                   vi = meta_data()[[v_col()]],
                    q = input$q,
                    cluster = cluster_col(),
                    favor_positive = positive(),
                    model_type = input$model_type)
-  })
+  }) |>
+    bindCache(meta_data(), y_col(), v_col(), positive(), input$model_type,
+              cluster_col(), input$q, valid_y(), valid_v(), valid_affirm())
   
   sval <- reactive({
     req(sval_model())
@@ -341,7 +348,9 @@ shinyServer(function(input, output) {
   output$funnel <- renderPlot({
     req(uncorrected_model(), worst_model())
     funnel_plot()
-  }, res = fp_res, height = fp_height, width = fp_width)
+  }, res = fp_res, height = fp_height, width = fp_width) |>
+    bindCache(uncorrected_model(), worst_model(),
+              sizePolicy = \(w, h) c(fp_width, fp_height))
   
   output$download_funnel <- downloadHandler(
     filename = function() {
