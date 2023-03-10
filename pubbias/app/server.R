@@ -4,40 +4,42 @@ shinyServer(function(input, output) {
   # overall input elements
   # ----------------------------------------------------------------------------
   
+  y_col <- reactive({
+    if (is.null(input$y_col)) "yi" else input$y_col
+  })
+  
   output$y_cols <- renderUI({
-    req(input$meta_data)
-    selectInput("y_col", "Column of point estimates",
+    req(meta_data_raw())
+    selectInput("y_col", "Column of point estimates", selected = y_col(),
                 choices = c("Select a column" = "", names(meta_data_raw())))
   })
   
+  v_col <- reactive({
+    if (is.null(input$v_col)) "vi" else input$v_col
+  })
+  
   output$v_cols <- renderUI({
-    req(input$meta_data)
-    selectInput("v_col", "Column of estimated variances",
+    req(meta_data_raw())
+    selectInput("v_col", "Column of estimated variances", selected = v_col(),
                 choices = c("Select a column" = "", names(meta_data_raw())))
   })
   
   output$directions <- renderUI({
-    req(input$meta_data, input$v_col)
-    selectInput("direction", "Direction", #selected = dir,
+    req(meta_data_raw())
+    selectInput("direction", "Direction",
                 choices = c("favor positive", "favor negative"))
   })
   
   output$model_type <- renderUI({
-    req(input$meta_data, input$y_col, input$v_col, input$direction)
+    req(meta_data_raw())
     selectInput("model_type", "Model type",
                 choices = c("robust random-effects" = "robust",
                             "fixed-effects" = "fixed"))
-    # selectInput("model_type", "Model type",
-    #             choices = c("fixed-effects" = "fixed",
-    #                         "robust random-effects" = "robust"))
   })
   
   output$cluster_cols <- renderUI({
-    req(input$meta_data, input$y_col, input$v_col, input$direction,
-        input$model_type)
+    req(meta_data_raw(), input$model_type)
     if (input$model_type == "robust") {
-      # selectInput("cluster_col", "Column of cluster labels",
-      #             choices = c("", "[none]", names(meta_data_raw())))
       selectInput("cluster_col", "Column of cluster labels",
                   choices = c("[none]", names(meta_data_raw())))
     }
@@ -46,26 +48,30 @@ shinyServer(function(input, output) {
   # ----------------------------------------------------------------------------
   # reactive values based on overall inputs
   # ----------------------------------------------------------------------------
+
+  # filename of data csv
+  input_file <- reactiveVal()
   
-  meta_data_raw <- reactive({
-    meta_file <- input$meta_data
-    # ext <- tools::file_ext(meta_file$datapath)
-    # req(meta_file)
-    # validate(need(ext == "csv", "Please upload a csv file"))
-    # danger("meta_data", ext == "csv", "please upload a csv file")
-    read_csv(meta_file$datapath, show_col_types = FALSE)
-    
-    # read_csv("../escalc_example.csv", show_col_types = FALSE) |>
-    #   mutate("unique_id" = 1:n(), .before = 1)
-    
-    # example_df <- metafor::escalc(measure = "RR", ai = tpos, bi = tneg,
-    #                               ci = cpos, di = cneg, data = metafor::dat.bcg)
-    # example_df$yi <- -example_df$yi
-    # example_df
+  # when add example button is clicked, make input_file be example_file
+  observeEvent(input$add_example, {
+    reset("meta_file")
+    if (input$add_example != 0) input_file(example_file)
   })
   
+  # when a file is uploaded, make input_file be path of uploaded file
+  observeEvent(input$meta_file, {
+    input_file(input$meta_file$datapath)
+  })
+  
+  meta_data_raw <- reactive({
+    req(input_file())
+    message(input_file())
+    read_csv(input_file(), show_col_types = FALSE)
+  })
+    
   meta_data <- reactive({
-    req(input$meta_data, input$y_col, input$v_col)
+    req(meta_data_raw(), input$y_col, input$v_col)
+    if (!all(c(y_col(), v_col()) %in% colnames(meta_data_raw()))) return(NULL)
     meta_data_raw() |>
       filter(!is.na(.data[[input$y_col]]), !is.na(.data[[input$v_col]]))
   })
@@ -80,18 +86,17 @@ shinyServer(function(input, output) {
     cc <- input$cluster_col
     cluster_none <- !is.null(cc) && str_detect(cc, "none")
     fixed <- str_detect(input$model_type, "fixed")
-    if (!fixed && is.null(cc)) return(FALSE) # for robust model, wait for cluster selection
-    # if (!fixed && (is.null(cc) || cc == "")) return(FALSE) # for robust model, wait for cluster selection
+    if (!fixed && is.null(cc)) return(FALSE)
     if (fixed || cluster_none) 1:nrow(meta_data()) else meta_data()[[cc]]
   })
   
   y_vals <- reactive({
-    req(meta_data(), input$y_col)
+    req(meta_data(), y_col())
     meta_data()[[input$y_col]]
   })
   
   v_vals <- reactive({
-    req(meta_data(), input$v_col)
+    req(meta_data(), v_col())
     meta_data()[[input$v_col]]
   })
   
@@ -113,11 +118,17 @@ shinyServer(function(input, output) {
     req(v_valid)
   })
   
+  valid_direction <- reactive({
+    req(input$direction)
+    direction_valid <- positive() == (uncorrected_model()$estimate > 0)
+    warn("error", !direction_valid,
+         "Warning: favored direction is opposite of the pooled estimate.")
+  })
+  
   valid_affirm <- reactive({
     req(y_vals(), v_vals(), input$direction)
     
     if (positive()) yi = y_vals() else yi = -y_vals()
-    # TODO: could this not duplicate affirm calculation?
     pvals <- 2 * (1 - pnorm(abs(yi) / sqrt(v_vals())))
     alpha <- formals(PublicationBias::pubbias_meta)$alpha_select
     affirm <- (pvals < alpha) & (yi > 0)
@@ -140,7 +151,6 @@ shinyServer(function(input, output) {
     sliderInput("eta", "Selection ratio (η)", value = 2, min = 1, max = 20, step = 1)
   })
   
-  # TODO: run pubbias_meta with selection_ratio 1 instead?
   uncorrected_model <- reactive({
     req(valid_y(), valid_v(), input$model_type, valid_affirm(), cluster_col())
     if (input$model_type == "fixed") {
@@ -157,10 +167,6 @@ shinyServer(function(input, output) {
                                    small = TRUE)
       meta_result <- metabias::robu_ci(meta_model)
     }
-    opposite_dir <- meta_result$estimate < 0 & positive() |
-      meta_result$estimate > 0 & !positive()
-    warn("error", opposite_dir,
-         "Warning: favored direction is opposite of the pooled estimate.")
     meta_result
   })
   
@@ -186,6 +192,7 @@ shinyServer(function(input, output) {
   
   output$uncorrected <- renderUI({
     req(uncorrected_model())
+    valid_direction()
     estimate_text("uncorrected", uncorrected_model())
   })
   
@@ -322,6 +329,7 @@ shinyServer(function(input, output) {
                         favor_positive = positive(),
                         est_all = uncorrected_model()$estimate,
                         est_worst = worst_model()$estimate) +
+      theme_classic(base_family = "Lato") +
       theme(legend.position = "top",
             legend.title = element_blank())
   }
@@ -337,7 +345,7 @@ shinyServer(function(input, output) {
   
   output$download_funnel <- downloadHandler(
     filename = function() {
-      paste0(tools::file_path_sans_ext(input$meta_data$name), "_funnel", ".png")
+      paste0(tools::file_path_sans_ext(basename(input_file())), "_funnel", ".png")
     },
     content = function(file) {
       ggsave(file, plot = funnel_plot(), device = "png", dpi = fp_res,

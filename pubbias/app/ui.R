@@ -22,7 +22,7 @@ fluidPage(
       fluidRow(
         column(
           width = 2,
-          fileInput("meta_data", "Upload meta-analysis data (csv)",
+          fileInput("meta_file", "Upload meta-analysis data (csv)",
                     accept = ".csv", placeholder = "")
         ),
         column(width = 2, uiOutput("y_cols")), tooltip("y_cols"),
@@ -31,7 +31,11 @@ fluidPage(
         column(width = 2, uiOutput("model_type")), tooltip("model_type"),
         column(width = 2, uiOutput("cluster_cols")), tooltip("cluster_cols"),
       ),
-      fluidRow(column(width = 11, offset = 2, textInput("error", "")))),
+      fluidRow(column(width = 2,
+                      actionButton("add_example", "Show example dataset",
+                                   class = "btn btn-file")),
+               column(width = 7, textInput("error", "")))
+  ),
   
   fluidRow(
     column(

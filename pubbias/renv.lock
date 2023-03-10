@@ -186,6 +186,7 @@
         "htmltools",
         "jquerylib",
         "jsonlite",
+        "memoise",
         "mime",
         "rlang",
         "sass"
@@ -759,6 +760,17 @@
       "Hash": "87da6ccdcee6077a7d5719406bf3ae45",
       "Requirements": []
     },
+    "memoise": {
+      "Package": "memoise",
+      "Version": "2.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e2817ccf4a065c5d9d7f2cfbe7c1d78c",
+      "Requirements": [
+        "cachem",
+        "rlang"
+      ]
+    },
     "metabias": {
       "Package": "metabias",
       "Version": "0.1.0",
@@ -1254,6 +1266,18 @@
       "Requirements": [
         "digest",
         "glue",
+        "shiny"
+      ]
+    },
+    "shinyjs": {
+      "Package": "shinyjs",
+      "Version": "2.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "802e4786b353a4bb27116957558548d5",
+      "Requirements": [
+        "digest",
+        "jsonlite",
         "shiny"
       ]
     },
