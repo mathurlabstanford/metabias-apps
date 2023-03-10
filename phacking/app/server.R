@@ -34,15 +34,26 @@ shinyServer(function(input, output) {
   # reactive values based on overall inputs
   # ----------------------------------------------------------------------------
   
+  # filename of data csv
+  input_file <- reactiveVal()
+
+  # when add example button is clicked, make input_file be example_file
+  observeEvent(input$add_example, {
+    message(input$add_example)
+    reset("meta_file")
+    if (input$add_example != 0) input_file(example_file)
+    message(input_file())
+  })
+
+  # when a file is uploaded, make input_file be path of uploaded file
+  observeEvent(input$meta_file, {
+    input_file(input$meta_file$datapath)
+  })
+  
   meta_data_raw <- reactive({
-    # info("default", is.null(input$meta_file),
-    #      "Showing results for an example dataset.")
-    # if (is.null(input$meta_file)) {
-    #   read_csv(example_file, show_col_types = FALSE)
-    # } else {
-      read_csv(input$meta_file$datapath, show_col_types = FALSE)
-    # }
-  }) |> bindCache(input$meta_file)
+    req(input_file())
+    read_csv(input_file(), show_col_types = FALSE)
+  })
   
   meta_data <- reactive({
     req(meta_data_raw(), y_col(), v_col())
@@ -71,18 +82,25 @@ shinyServer(function(input, output) {
   # ----------------------------------------------------------------------------
   
   valid_y <- reactive({
-    req(y_col()) # req(y_vals())
+    req(y_col())
     y_valid <- is.numeric(y_vals())
     danger("y_col", !y_valid, "values must be numeric")
     req(y_valid)
-  }) #|> bindCache(y_col())
+  })
   
   valid_v <- reactive({
-    req(v_col()) #, v_vals()) TODO
+    req(v_col())
     v_valid <- is.numeric(v_vals()) & all(v_vals() > 0)
     danger("v_col", !v_valid, "values must be numeric & positive")
     req(v_valid)
-  }) #|> bindCache(v_col())
+  })
+  
+  valid_direction <- reactive({
+    req(input$direction)
+    direction_valid <- positive() == (uncorrected_model()$estimate > 0)
+    warn("error", !direction_valid,
+         "Warning: favored direction is opposite of the pooled estimate.")
+  })
   
   valid_affirm <- reactive({
     req(y_vals(), v_vals(), input$direction)
@@ -100,7 +118,7 @@ shinyServer(function(input, output) {
                   and direction.")
     danger("error", no_either, error)
     req(!no_either)
-  }) #|> bindCache(y_col(), v_col(), input$direction)
+  })
   
   # ----------------------------------------------------------------------------
   # phacking_meta
@@ -114,19 +132,14 @@ shinyServer(function(input, output) {
                                  data = meta_data(),
                                  var.eff.size = v_vals(),
                                  small = TRUE)
-    meta_result <- metabias::robu_ci(meta_model)
-    
-    opposite_dir <- meta_result$estimate < 0 & positive() |
-      meta_result$estimate > 0 & !positive()
-    warn("error", opposite_dir,
-         "Warning: favored direction is opposite of the pooled estimate.")
-    meta_result
+    metabias::robu_ci(meta_model)
   }) |>
     bindCache(meta_data(), y_col(), v_col(), input$direction,
               valid_y(), valid_v(), valid_affirm())
 
   output$uncorrected <- renderUI({
     req(uncorrected_model())
+    valid_direction()
     estimate_text("uncorrected", uncorrected_model())
   })
   
@@ -143,8 +156,7 @@ shinyServer(function(input, output) {
     metabias::robu_ci(worst_model)
   }) |>
     bindCache(corrected_model())
-    # bindCache(meta_data(), y_col(), v_col(), input$direction)
-  
+
   output$worst <- renderUI({
     req(worst_model())
     estimate_text("worst case", worst_model())
@@ -152,11 +164,13 @@ shinyServer(function(input, output) {
   
   corrected_model <- reactive({
     req(input$direction, valid_y(), valid_v(), valid_affirm())
+    disable(selector = ".bs-callout-input")
     meta <- phacking_meta(yi = meta_data()[[y_col()]],
                           vi = meta_data()[[v_col()]],
                           favor_positive = positive(),
                           parallelize = FALSE)
     meta$stats <- meta$stats |> rename(estimate = mode)
+    enable(selector = ".bs-callout-input")
     meta
   }) |>
     bindCache(meta_data(), y_col(), v_col(), input$direction,

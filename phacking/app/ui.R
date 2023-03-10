@@ -1,4 +1,5 @@
 fluidPage(
+  useShinyjs(),
   useShinyFeedback(),
   rclipboardSetup(),
   
@@ -24,14 +25,18 @@ fluidPage(
         column(
           width = 3,
           fileInput("meta_file", "Upload meta-analysis data (csv)",
-                    accept = ".csv", placeholder = "")
+                    accept = ".csv", placeholder = ""),
         ),
         column(width = 2, uiOutput("y_cols")), tooltip("y_cols"),
         column(width = 2, uiOutput("v_cols")), tooltip("v_cols"),
         column(width = 2, uiOutput("directions")), tooltip("directions"),
       ),
-      fluidRow(column(width = 3, textInput("default", "")),
-               column(width = 7, textInput("error", "")))
+      fluidRow(
+        column(width = 3, actionButton("add_example", "Show example dataset",
+                                       class = "btn btn-file")),
+        column(width = 3, textInput("default", "")),
+        column(width = 7, textInput("error", ""))
+      )
   ),
   
   fluidRow(

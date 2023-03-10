@@ -62,6 +62,7 @@ h2 {
 
 .selectize-control {
   margin-bottom: 0px;
+  max-height: 34px;
 }
 
 .shiny-input-container:not(.shiny-input-container-inline) {
@@ -84,4 +85,8 @@ h2 {
   padding: 0px 15px;
   display: inherit;
   height: 34px;
+}
+
+.row {
+  margin-bottom: 6px;
 }

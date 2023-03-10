@@ -4,6 +4,8 @@ library(shinyFeedback)
 library(shinycssloaders)
 library(shinyBS)
 library(rclipboard)
+library(shinyjs)
+
 library(glue)
 library(tidyverse)
 library(markdown)
