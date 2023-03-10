@@ -173,16 +173,13 @@ shinyServer(function(input, output) {
   meta_model <- reactive({
     req(input$eta, valid_y(), valid_v(), valid_affirm(),
         input$model_type, cluster_col())
-    # disable(selector = ".bs-callout-input")
-    meta <- pubbias_meta(yi = meta_data()[[y_col()]],
-                         vi = meta_data()[[v_col()]],
-                         selection_ratio = input$eta,
-                         cluster = cluster_col(),
-                         model_type = input$model_type,
-                         favor_positive = positive(),
-                         return_worst_meta = TRUE)
-    # enable(selector = ".bs-callout-input")
-    meta
+    pubbias_meta(yi = meta_data()[[y_col()]],
+                 vi = meta_data()[[v_col()]],
+                 selection_ratio = input$eta,
+                 cluster = cluster_col(),
+                 model_type = input$model_type,
+                 favor_positive = positive(),
+                 return_worst_meta = TRUE)
   }) |>
     bindCache(meta_data(), y_col(), v_col(), positive(), input$model_type,
               cluster_col(), input$eta, valid_y(), valid_v(), valid_affirm())
@@ -250,12 +247,15 @@ shinyServer(function(input, output) {
   sval_model <- reactive({
     req(input$q, valid_y(), valid_v(), valid_affirm(),
         input$model_type, cluster_col())
-    pubbias_svalue(yi = meta_data()[[y_col()]],
-                   vi = meta_data()[[v_col()]],
-                   q = input$q,
-                   cluster = cluster_col(),
-                   favor_positive = positive(),
-                   model_type = input$model_type)
+    disable(selector = ".bs-callout-input")
+    svalue <- pubbias_svalue(yi = meta_data()[[y_col()]],
+                             vi = meta_data()[[v_col()]],
+                             q = input$q,
+                             cluster = cluster_col(),
+                             favor_positive = positive(),
+                             model_type = input$model_type)
+    enable(selector = ".bs-callout-input")
+    svalue
   }) |>
     bindCache(meta_data(), y_col(), v_col(), positive(), input$model_type,
               cluster_col(), input$q, valid_y(), valid_v(), valid_affirm())
