@@ -39,10 +39,8 @@ shinyServer(function(input, output) {
 
   # when add example button is clicked, make input_file be example_file
   observeEvent(input$add_example, {
-    message(input$add_example)
     reset("meta_file")
     if (input$add_example != 0) input_file(example_file)
-    message(input_file())
   })
 
   # when a file is uploaded, make input_file be path of uploaded file
@@ -82,14 +80,14 @@ shinyServer(function(input, output) {
   # ----------------------------------------------------------------------------
   
   valid_y <- reactive({
-    req(y_col())
+    req(y_vals())
     y_valid <- is.numeric(y_vals())
     danger("y_col", !y_valid, "values must be numeric")
     req(y_valid)
   })
   
   valid_v <- reactive({
-    req(v_col())
+    req(v_vals())
     v_valid <- is.numeric(v_vals()) & all(v_vals() > 0)
     danger("v_col", !v_valid, "values must be numeric & positive")
     req(v_valid)
@@ -106,7 +104,6 @@ shinyServer(function(input, output) {
     req(y_vals(), v_vals(), input$direction)
     
     if (positive()) yi = y_vals() else yi = -y_vals()
-    # TODO: could this not duplicate affirm calculation?
     pvals <- 2 * (1 - pnorm(abs(yi) / sqrt(v_vals())))
     alpha <- formals(phacking::phacking_meta)$alpha_select
     affirm <- (pvals < alpha) & (yi > 0)
@@ -226,6 +223,7 @@ shinyServer(function(input, output) {
     cm <- corrected_model()
     cm$values$tcrit <- qnorm(0.975)
     rtma_qqplot(cm) +
+      theme_classic(base_family = "Lato") +
       theme(legend.position = "top",
             legend.title = element_blank())
   }
@@ -242,7 +240,7 @@ shinyServer(function(input, output) {
   
   output$download_qqplot <- downloadHandler(
     filename = function() {
-      paste0(tools::file_path_sans_ext(input$meta_file$name), "_qqplot", ".png")
+      paste0(tools::file_path_sans_ext(basename(input_file())), "_qqplot", ".png")
     },
     content = function(file) {
       ggsave(file, plot = plot_qqplot(), device = "png", dpi = qq_res,
@@ -260,7 +258,8 @@ shinyServer(function(input, output) {
   # ----------------------------------------------------------------------------
   
   plot_zdensity <- function() {
-    z_density(y_vals(), v_vals(), crit_color = "#dc322f")
+    z_density(y_vals(), v_vals(), crit_color = "#dc322f") +
+      theme_classic(base_family = "Lato")
   }
   
   zd_res <- 300
@@ -275,7 +274,7 @@ shinyServer(function(input, output) {
   
   output$download_zdensity <- downloadHandler(
     filename = function() {
-      paste0(tools::file_path_sans_ext(input$meta_file$name), "_zdensity", ".png")
+      paste0(tools::file_path_sans_ext(basename(input_file())), "_zdensity", ".png")
     },
     content = function(file) {
       ggsave(file, plot = plot_zdensity(), device = "png", dpi = zd_res,

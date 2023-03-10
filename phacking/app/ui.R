@@ -34,7 +34,6 @@ fluidPage(
       fluidRow(
         column(width = 3, actionButton("add_example", "Show example dataset",
                                        class = "btn btn-file")),
-        column(width = 3, textInput("default", "")),
         column(width = 7, textInput("error", ""))
       )
   ),
