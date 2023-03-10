@@ -1,0 +1,43 @@
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        required: true
+        type: string
+      account-name:
+        required: true
+        type: string
+
+jobs:
+  shiny-deploy:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.app-name }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-renv@v2
+
+      - name: Install rsconnect
+        run: install.packages("rsconnect")
+        shell: Rscript {0}
+
+      - name: Authorize and deploy app
+        env: 
+          APPNAME: ${{ inputs.app-name }}
+          ACCOUNT: ${{ inputs.account-name }}
+          SERVER: shinyapps.io
+        run: |
+          rsconnect::setAccountInfo("${{ secrets.RSCONNECT_USER }}", "${{ secrets.RSCONNECT_TOKEN }}", "${{ secrets.RSCONNECT_SECRET }}")
+          rsconnect::deployApp(appName = "${{ env.APPNAME }}", account = "${{ env.ACCOUNT }}", server = "${{ env.SERVER }}")
+        shell: Rscript {0}
+        

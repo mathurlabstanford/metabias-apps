@@ -1,0 +1,16 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  push:
+    branches: main
+
+name: Deploy Shiny apps
+
+jobs:
+  deploy-pubbias:
+    name: Deploy pubbias app
+    uses: ./.github/workflows/deply-single-app.yml
+    with:
+      app-name: pubbias
+      account-name: qsu-stanford
+    secrets: inherit
