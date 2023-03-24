@@ -39,7 +39,7 @@ jobs:
           APPNAME: ${{ inputs.app-name }}
           ACCOUNT: ${{ inputs.account-name }}
           SERVER: shinyapps.io
-        working-directory: app
+        working-directory: ${{ inputs.app-name }}/app
         run: |
           rsconnect::setAccountInfo("${{ secrets.RSCONNECT_USER }}", "${{ secrets.RSCONNECT_TOKEN }}", "${{ secrets.RSCONNECT_SECRET }}")
           rsconnect::deployApp(appName = "${{ env.APPNAME }}", account = "${{ env.ACCOUNT }}", server = "${{ env.SERVER }}")
