@@ -13,11 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      
     steps:
-      - name: Change directory
-        run: |
-          cd ${{ inputs.app-name }}
-          
+    
       - name: Checkout
         uses: actions/checkout@v3
 
