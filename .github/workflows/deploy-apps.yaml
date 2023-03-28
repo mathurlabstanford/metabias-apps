@@ -7,10 +7,19 @@ on:
 name: Deploy Shiny apps
 
 jobs:
+
   deploy-pubbias:
     name: Deploy pubbias app
     uses: ./.github/workflows/deploy-single-app.yml
     with:
       app-name: pubbias
+      account-name: qsu-stanford
+    secrets: inherit
+    
+  deploy-phacking:
+    name: Deploy phacking app
+    uses: ./.github/workflows/deploy-single-app.yml
+    with:
+      app-name: phacking
       account-name: qsu-stanford
     secrets: inherit
