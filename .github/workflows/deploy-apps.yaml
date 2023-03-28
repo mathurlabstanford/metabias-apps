@@ -10,6 +10,7 @@ jobs:
 
   deploy-pubbias:
     name: Deploy pubbias app
+    if: contains(github.event.head_commit.message, 'deploy pubbias')
     uses: ./.github/workflows/deploy-single-app.yml
     with:
       app-name: pubbias
@@ -18,6 +19,7 @@ jobs:
     
   deploy-phacking:
     name: Deploy phacking app
+    if: contains(github.event.head_commit.message, 'deploy phacking')
     uses: ./.github/workflows/deploy-single-app.yml
     with:
       app-name: phacking
