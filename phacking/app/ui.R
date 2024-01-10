@@ -9,7 +9,7 @@ fluidPage(
   
   title = "p-hacking",
   
-  titlePanel("Sensitivity analysis for phacking in meta-analyses"),
+  titlePanel("Sensitivity analysis for p-hacking in meta-analyses"),
   
   fluidRow(
     column(
